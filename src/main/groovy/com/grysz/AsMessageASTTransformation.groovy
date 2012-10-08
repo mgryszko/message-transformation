@@ -21,35 +21,33 @@ class AsMessageASTTransformation implements ASTTransformation {
             addError("Internal error: expecting [AnnotationNode, AnnotatedNode] but got: ${nodes.toList()}", nodes[0], source);
         }
         MethodNode method = nodes[1]
-        if (!method.parameters)
+        if (method.parameters.size() > 1)
         {
-            return
-        }
-
-        MethodNode message = new MethodNode(
-            method.name,
-            method.modifiers,
-            method.returnType,
-            new Parameter(new ClassNode(Map), 'args') as Parameter[],
-            method.exceptions,
-            new BlockStatement(
-                [
-                    new ExpressionStatement(
-                        new MethodCallExpression(
-                            VariableExpression.THIS_EXPRESSION,
-                            method.name,
-                            new ArgumentListExpression(
-                                method.parameters.collect {
-                                    new PropertyExpression(new VariableExpression('args'), it.name)
-                                }
+            MethodNode message = new MethodNode(
+                method.name,
+                method.modifiers,
+                method.returnType,
+                new Parameter(new ClassNode(Map), 'args') as Parameter[],
+                method.exceptions,
+                new BlockStatement(
+                    [
+                        new ExpressionStatement(
+                            new MethodCallExpression(
+                                VariableExpression.THIS_EXPRESSION,
+                                method.name,
+                                new ArgumentListExpression(
+                                    method.parameters.collect {
+                                        new PropertyExpression(new VariableExpression('args'), it.name)
+                                    }
+                                )
                             )
                         )
-                    )
-                ],
-                new VariableScope()
+                    ],
+                    new VariableScope()
+                )
             )
-        )
-        method.declaringClass.addMethod message
+            method.declaringClass.addMethod message
+        }
     }
 
     private addError(msg, expr, source) {
