@@ -3,23 +3,35 @@ package com.grysz
 import spock.lang.Specification
 
 class MethodAsMessageSpec extends Specification {
-    def container = new MethodContainer()
+    private container = new MethodContainer()
 
-    def 'adds a named arguments signature based on the standard method signature will all but first argument'() {
+    def 'adds a method with named arguments calling the original method with a single parameter'() {
         expect:
-        container.metaClass.respondsTo(container, 'singleParameterMethod', object())
+        container.metaClass.respondsTo(container, 'singleParameterMethod', namedObject())
         container.metaClass.respondsTo(container, 'singleParameterMethod', map())
-        container.singleParameterMethod(object()) == 'result'
-        container.singleParameterMethod(param1: object()) == 'result'
+        container.singleParameterMethod(namedObject('o1')) == container.singleParameterMethod(param1: namedObject('o1'))
     }
 
-    // TODO transformation on a method with multiple parameters
+    def 'adds a method with named arguments calling the original method with two parameters'() {
+        expect:
+        container.metaClass.respondsTo(container, 'twoParameterMethod', namedObject(), namedObject())
+        container.metaClass.respondsTo(container, 'twoParameterMethod', map())
+        container.twoParameterMethod(namedObject('o1'), namedObject('o2')) ==
+            container.twoParameterMethod(param1: namedObject('o1'), param2: namedObject('o2'))
+    }
+
+    // TODO MethodContainer methods should return a string made of concatenated string representation of arguments
     // TODO first parameter is untouched, further parameters are converted to map
-    // TODO transformation on a method with default parameter values (if applicable)
     // TODO transformation on parameterless method
+    // TODO transformation on a method with default parameter values (if applicable)
+    // TODO control if all parameters are passed
     // TODO transformation on class?
 
-    private object() { new Object() }
+    private namedObject(name) {
+        new Object() {
+            String toString() { name }
+        }
+    }
 
     private map() { [:] }
 }

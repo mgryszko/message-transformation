@@ -35,7 +35,9 @@ class AsMessageASTTransformation implements ASTTransformation {
                             VariableExpression.THIS_EXPRESSION,
                             method.name,
                             new ArgumentListExpression(
-                                new PropertyExpression(new VariableExpression('args'), method.parameters[0].name)
+                                method.parameters.collect {
+                                    new PropertyExpression(new VariableExpression('args'), it.name)
+                                }
                             )
                         )
                     )
@@ -43,19 +45,22 @@ class AsMessageASTTransformation implements ASTTransformation {
                 new VariableScope()
             )
         )
-        /*
-        method(param1, param2)
-
-        method(Map args) {
-            method(args.param1, args.param2)
-        }
-         */
-
-        method.declaringClass.addMethod(message)
+        method.declaringClass.addMethod message
     }
 
     private addError(msg, expr, source) {
         def syntaxEx = new SyntaxException("$msg\n", expr.getLineNumber(), expr.getColumnNumber())
         source.getErrorCollector().addError new SyntaxErrorMessage(syntaxEx, source)
+    }
+
+    private cloneMethodWithSingleParameter(sourceMethod, parameter, statement) {
+        new MethodNode(
+            sourceMethod.name,
+            sourceMethod.modifiers,
+            sourceMethod.returnType,
+            parameter as Parameter[],
+            sourceMethod.exceptions,
+            statement
+        )
     }
 }
