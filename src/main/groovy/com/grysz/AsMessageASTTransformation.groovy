@@ -21,6 +21,10 @@ class AsMessageASTTransformation implements ASTTransformation {
             addError("Internal error: expecting [AnnotationNode, AnnotatedNode] but got: ${nodes.toList()}", nodes[0], source);
         }
         MethodNode method = nodes[1]
+        if (!method.parameters)
+        {
+            return
+        }
 
         MethodNode message = new MethodNode(
             method.name,

@@ -5,6 +5,12 @@ import spock.lang.Specification
 class MethodAsMessageSpec extends Specification {
     private container = new MethodContainer()
 
+    def 'parameterless method is not transformed'() {
+        expect:
+        container.metaClass.respondsTo(container, 'parameterlessMethod')
+        !container.metaClass.respondsTo(container, 'parameterlessMethod', map())
+    }
+
     def 'adds a method with named arguments calling the original method with a single parameter'() {
         expect:
         container.metaClass.respondsTo(container, 'singleParameterMethod', namedObject())
