@@ -10,3 +10,8 @@ dependencies {
         exclude group: 'org.codehaus.groovy', module: 'groovy-all'
     }
 }
+
+task(console, dependsOn: 'classes', type: JavaExec) {
+    main = 'groovy.ui.Console'
+    classpath = sourceSets.test.runtimeClasspath
+}
