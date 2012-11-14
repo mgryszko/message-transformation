@@ -20,21 +20,21 @@ class MethodAsMessageSpec extends Specification {
     def 'adds a method with named arguments calling the original method with two parameters'() {
         expect:
         container.metaClass.respondsTo(container, 'twoParameterMethod', String, Number)
-        container.metaClass.respondsTo(container, 'twoParameterMethod', Map)
-        container.twoParameterMethod('p1', 1) == container.twoParameterMethod(param1: 'p1', param2: 1)
+        container.metaClass.respondsTo(container, 'twoParameterMethod', Map, String)
+        container.twoParameterMethod('p1', 1) == container.twoParameterMethod('p1', param2: 1)
     }
 
     def 'adds a method with named arguments calling the original method with three parameters'() {
         expect:
         container.metaClass.respondsTo(container, 'threeParameterMethod', String, Number, List)
-        container.metaClass.respondsTo(container, 'threeParameterMethod', Map)
+        container.metaClass.respondsTo(container, 'threeParameterMethod', Map, String)
         container.threeParameterMethod('p1', 1, ['p3']) ==
-            container.threeParameterMethod(param1: 'p1', param2: 1, param3: ['p3'])
+            container.threeParameterMethod('p1', param2: 1, param3: ['p3'])
     }
 
-    // TODO MethodContainer methods should return a string made of concatenated string representation of arguments
-    // TODO first parameter is untouched, further parameters are converted to map
     // TODO transformation on a method with default parameter values (if applicable)
+    // TODO transformation on a method with named parameters
+    // TODO transformation on a method with varargs
     // TODO control if all parameters are passed
     // TODO transformation on class?
 }

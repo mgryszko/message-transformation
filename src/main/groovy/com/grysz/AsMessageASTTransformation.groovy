@@ -1,4 +1,5 @@
 package com.grysz
+
 import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
@@ -21,48 +22,43 @@ class AsMessageASTTransformation implements ASTTransformation {
             addError("Internal error: expecting [AnnotationNode, AnnotatedNode] but got: ${nodes.toList()}", nodes[0], source);
         }
         MethodNode method = nodes[1]
-        if (method.parameters.size() > 1)
-        {
-            MethodNode message = new MethodNode(
+        if (method.parameters.size() > 1) {
+            method.declaringClass.addMethod new MethodNode(
                 method.name,
                 method.modifiers,
                 method.returnType,
-                new Parameter(new ClassNode(Map), 'args') as Parameter[],
+                toMessageParams(method.parameters),
                 method.exceptions,
-                new BlockStatement(
-                    [
-                        new ExpressionStatement(
-                            new MethodCallExpression(
-                                VariableExpression.THIS_EXPRESSION,
-                                method.name,
-                                new ArgumentListExpression(
-                                    method.parameters.collect {
-                                        new PropertyExpression(new VariableExpression('args'), it.name)
-                                    }
-                                )
-                            )
-                        )
-                    ],
-                    new VariableScope()
-                )
+                callTransformedMethodBody(method.name, method.parameters),
             )
-            method.declaringClass.addMethod message
         }
+    }
+
+    private toMessageParams(params) {
+        [
+            new Parameter(new ClassNode(Map), 'args'),
+            new Parameter(params[0].type, params[0].name),
+        ] as Parameter[]
+    }
+
+    private callTransformedMethodBody(name, params) {
+        def transformedMethodArgs = [new VariableExpression(params[0].name)] +
+            params[1..params.size() - 1].collect {
+                new PropertyExpression(new VariableExpression('args'), it.name)
+            }
+        new BlockStatement([
+            new ExpressionStatement(
+                new MethodCallExpression(
+                    VariableExpression.THIS_EXPRESSION,
+                    name,
+                    new ArgumentListExpression(transformedMethodArgs)
+                )
+            )], new VariableScope()
+        )
     }
 
     private addError(msg, expr, source) {
         def syntaxEx = new SyntaxException("$msg\n", expr.getLineNumber(), expr.getColumnNumber())
         source.getErrorCollector().addError new SyntaxErrorMessage(syntaxEx, source)
-    }
-
-    private cloneMethodWithSingleParameter(sourceMethod, parameter, statement) {
-        new MethodNode(
-            sourceMethod.name,
-            sourceMethod.modifiers,
-            sourceMethod.returnType,
-            parameter as Parameter[],
-            sourceMethod.exceptions,
-            statement
-        )
     }
 }
