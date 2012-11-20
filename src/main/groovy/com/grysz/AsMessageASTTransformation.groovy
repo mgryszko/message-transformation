@@ -1,10 +1,7 @@
 package com.grysz
 
 import org.codehaus.groovy.ast.*
-import org.codehaus.groovy.ast.expr.ArgumentListExpression
-import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codehaus.groovy.ast.expr.PropertyExpression
-import org.codehaus.groovy.ast.expr.VariableExpression
+import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.control.CompilePhase
@@ -42,9 +39,25 @@ class AsMessageASTTransformation implements ASTTransformation {
     }
 
     private callTransformedMethodBody(name, params) {
+        def args = new VariableExpression('args')
+
         def transformedMethodArgs = [new VariableExpression(params[0].name)] +
-            params[1..params.size() - 1].collect {
-                new PropertyExpression(new VariableExpression('args'), it.name)
+            params[1..params.size() - 1].collect { Parameter it ->
+                if (it.hasInitialExpression()) {
+                    new TernaryExpression(
+                        new BooleanExpression(
+                            new MethodCallExpression(
+                                args,
+                                'containsKey',
+                                new ArgumentListExpression(new ConstantExpression(it.name))
+                            )
+                        ),
+                        new PropertyExpression(args, it.name), // then
+                        it.initialExpression // else
+                    )
+                } else {
+                    new PropertyExpression(args, it.name)
+                }
             }
         new BlockStatement([
             new ExpressionStatement(

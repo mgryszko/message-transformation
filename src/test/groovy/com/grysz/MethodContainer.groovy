@@ -20,4 +20,9 @@ class MethodContainer {
     def threeParameterMethod(String param1, Number param2, List param3) {
         "threeParameterMethod($param1, $param2, $param3)"
     }
+
+    @AsMessage
+    def methodWithDefaultParameterValues(String param1 = '1', Number param2 = 2, List param3 = 1..3, param4 = '4') {
+        "methodWithDefaultParameterValues($param1, $param2, $param3, $param4)"
+    }
 }

@@ -21,18 +21,28 @@ class MethodAsMessageSpec extends Specification {
         expect:
         container.metaClass.respondsTo(container, 'twoParameterMethod', String, Number)
         container.metaClass.respondsTo(container, 'twoParameterMethod', Map, String)
-        container.twoParameterMethod('p1', 1) == container.twoParameterMethod('p1', param2: 1)
+        container.twoParameterMethod('p1', 2) == container.twoParameterMethod('p1', param2: 2)
     }
 
     def 'adds a method with named arguments calling the original method with three parameters'() {
         expect:
         container.metaClass.respondsTo(container, 'threeParameterMethod', String, Number, List)
         container.metaClass.respondsTo(container, 'threeParameterMethod', Map, String)
-        container.threeParameterMethod('p1', 1, ['p3']) ==
-            container.threeParameterMethod('p1', param2: 1, param3: ['p3'])
+        container.threeParameterMethod('p1', 2, ['p3']) ==
+            container.threeParameterMethod('p1', param2: 2, param3: ['p3'])
     }
 
-    // TODO transformation on a method with default parameter values (if applicable)
+    def 'if method has default parameter values, these are used as default key values'() {
+        expect:
+        container.methodWithDefaultParameterValues('11', 22, 31..33, '44') ==
+            container.methodWithDefaultParameterValues('11', param2: 22, param3: 31..33, param4: '44')
+        container.methodWithDefaultParameterValues('11', 22, 31..33) ==
+            container.methodWithDefaultParameterValues('11', param2: 22, param3: 31..33)
+        container.methodWithDefaultParameterValues('11', 22) ==
+            container.methodWithDefaultParameterValues('11', param2: 22)
+    }
+
+    // TODO transformation on a method with default first parameter
     // TODO transformation on a method with named parameters
     // TODO transformation on a method with varargs
     // TODO control if all parameters are passed
