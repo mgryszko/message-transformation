@@ -11,6 +11,8 @@ import org.codehaus.groovy.syntax.SyntaxException
 import org.codehaus.groovy.transform.ASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
 
+import static org.codehaus.groovy.ast.expr.VariableExpression.THIS_EXPRESSION
+
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 class AsMessageASTTransformation implements ASTTransformation {
     @Override
@@ -24,54 +26,60 @@ class AsMessageASTTransformation implements ASTTransformation {
                 method.name,
                 method.modifiers,
                 method.returnType,
-                toMessageParams(method.parameters),
+                messageMethodParametersFrom(method.parameters),
                 method.exceptions,
-                callTransformedMethodBody(method.name, method.parameters),
+                messageMethodBodyCalling(method),
             )
         }
     }
 
-    private toMessageParams(params) {
+    private addError(msg, expr, source) {
+        def syntaxEx = new SyntaxException("$msg\n", expr.getLineNumber(), expr.getColumnNumber())
+        source.getErrorCollector().addError new SyntaxErrorMessage(syntaxEx, source)
+    }
+
+    private messageMethodParametersFrom(params) {
         [
             new Parameter(new ClassNode(Map), 'args'),
             new Parameter(params[0].type, params[0].name),
         ] as Parameter[]
     }
 
-    private callTransformedMethodBody(name, params) {
-        def args = new VariableExpression('args')
-
-        def transformedMethodArgs = [new VariableExpression(params[0].name)] +
-            params[1..params.size() - 1].collect { Parameter it ->
-                if (it.hasInitialExpression()) {
-                    new TernaryExpression(
-                        new BooleanExpression(
-                            new MethodCallExpression(
-                                args,
-                                'containsKey',
-                                new ArgumentListExpression(new ConstantExpression(it.name))
-                            )
-                        ),
-                        new PropertyExpression(args, it.name), // then
-                        it.initialExpression // else
-                    )
-                } else {
-                    new PropertyExpression(args, it.name)
-                }
-            }
+    private messageMethodBodyCalling(method) {
         new BlockStatement([
             new ExpressionStatement(
-                new MethodCallExpression(
-                    VariableExpression.THIS_EXPRESSION,
-                    name,
-                    new ArgumentListExpression(transformedMethodArgs)
-                )
+                new MethodCallExpression(THIS_EXPRESSION, method.name, argsToCallOriginalMethod(method.parameters))
             )], new VariableScope()
         )
     }
 
-    private addError(msg, expr, source) {
-        def syntaxEx = new SyntaxException("$msg\n", expr.getLineNumber(), expr.getColumnNumber())
-        source.getErrorCollector().addError new SyntaxErrorMessage(syntaxEx, source)
+    private argsToCallOriginalMethod(params) {
+        def argsParam = new VariableExpression('args')
+
+        def args = [new VariableExpression(params[0].name)] + allButFirst(params).collect {
+            if (it.hasInitialExpression()) {
+                new TernaryExpression(
+                    new BooleanExpression(containsKey(argsParam, it.name)), // if
+                    valueFromMap(argsParam, it.name), // then
+                    it.initialExpression // else
+                )
+            } else {
+                valueFromMap(argsParam, it.name)
+            }
+        }
+
+        new ArgumentListExpression(args)
+    }
+
+    private allButFirst(c) {
+        c[1..c.size() - 1]
+    }
+
+    private valueFromMap(map, key) {
+        new PropertyExpression(map, key)
+    }
+
+    private containsKey(map, key) {
+        new MethodCallExpression(map, 'containsKey', new ArgumentListExpression(new ConstantExpression(key)))
     }
 }
