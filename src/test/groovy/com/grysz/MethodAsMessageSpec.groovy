@@ -40,11 +40,18 @@ class MethodAsMessageSpec extends Specification {
             container.methodWithDefaultParameterValues('11', param2: 22, param3: 31..33)
         container.methodWithDefaultParameterValues('11', 22) ==
             container.methodWithDefaultParameterValues('11', param2: 22)
+        container.methodWithDefaultParameterValues('11') == container.methodWithDefaultParameterValues([:], '11')
     }
 
-    // TODO transformation on a method with default first parameter
+    def 'transformed method first parameter default value is taken from the original method'() {
+        expect:
+        container.firstParameterHasDefaultValue(22, 31..33) ==
+            container.firstParameterHasDefaultValue(param2: 22, param3: 31..33)
+    }
+
     // TODO transformation on a method with named parameters
     // TODO transformation on a method with varargs
+    // TODO transformation on a method with closure as last parameter
     // TODO control if all parameters are passed
-    // TODO transformation on class?
+    // TODO choose if first parameter should be preserved
 }

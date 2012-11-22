@@ -41,7 +41,7 @@ class AsMessageASTTransformation implements ASTTransformation {
     private messageMethodParametersFrom(params) {
         [
             new Parameter(new ClassNode(Map), 'args'),
-            new Parameter(params[0].type, params[0].name),
+            new Parameter(params[0].type, params[0].name, params[0].initialExpression),
         ] as Parameter[]
     }
 
