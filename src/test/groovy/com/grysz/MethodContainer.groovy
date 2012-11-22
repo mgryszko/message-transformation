@@ -2,28 +2,28 @@ package com.grysz
 
 class MethodContainer {
     @AsMessage
-    def parameterlessMethod() {
-        'parameterlessMethod'
+    def parameterless() {
+        'parameterless'
     }
 
     @AsMessage
-    def singleParameterMethod(String param1) {
-        "singleParameterMethod($param1)"
+    def singleParameter(String param1) {
+        "singleParameter($param1)"
     }
 
     @AsMessage
-    def twoParameterMethod(String param1, Number param2) {
-        "twoParameterMethod($param1, $param2)"
+    def twoParameters(String param1, Number param2) {
+        "twoParameters($param1, $param2)"
     }
 
     @AsMessage
-    def threeParameterMethod(String param1, Number param2, List param3) {
-        "threeParameterMethod($param1, $param2, $param3)"
+    def threeParameters(String param1, Number param2, List param3) {
+        "threeParameters($param1, $param2, $param3)"
     }
 
     @AsMessage
-    def methodWithDefaultParameterValues(String param1 = '1', Number param2 = 2, List param3 = 1..3, param4 = '4') {
-        "methodWithDefaultParameterValues($param1, $param2, $param3, $param4)"
+    def defaultParameterValues(String param1 = '1', Number param2 = 2, List param3 = 1..3, param4 = '4') {
+        "defaultParameterValues($param1, $param2, $param3, $param4)"
     }
 
     @AsMessage
