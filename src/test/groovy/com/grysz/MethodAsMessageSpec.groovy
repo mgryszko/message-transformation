@@ -21,7 +21,7 @@ class MethodAsMessageSpec extends Specification {
         expect:
         container.metaClass.respondsTo(container, 'twoParameters', String, Number)
         container.metaClass.respondsTo(container, 'twoParameters', Map, String)
-        container.twoParameters('p1', 2) == container.twoParameters('p1', param2: 2)
+        container.twoParameters('1', 2) == container.twoParameters('1', param2: 2)
     }
 
     def 'adds a method with named arguments calling the original method with three parameters'() {
@@ -47,7 +47,12 @@ class MethodAsMessageSpec extends Specification {
             container.firstParameterHasDefaultValue(param2: 22, param3: 31..33)
     }
 
-    // TODO transformation on a method with named parameters
+    def 'named parameters'() {
+        expect:
+        container.namedParameters('1', 2, namedParam1: 1..3, namedParam2: 'np2') ==
+            container.namedParameters([namedParam1: 1..3, namedParam2: 'np2'], param1: '1', param2: 2)
+    }
+
     // TODO transformation on a method with varargs
     // TODO transformation on a method with closure as last parameter
     // TODO control if all parameters are passed

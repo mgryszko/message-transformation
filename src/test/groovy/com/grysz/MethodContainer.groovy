@@ -30,4 +30,9 @@ class MethodContainer {
     def firstParameterHasDefaultValue(String param1 = '1', Number param2, List param3) {
         "firstParameterHasDefaultValue($param1, $param2, $param3)"
     }
+
+    @AsMessage
+    def namedParameters(Map args, String param1, Number param2) {
+        "namedParameters($args, $param1, $param2)"
+    }
 }

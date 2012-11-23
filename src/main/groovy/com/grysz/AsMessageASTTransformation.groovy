@@ -15,6 +15,8 @@ import static org.codehaus.groovy.ast.expr.VariableExpression.THIS_EXPRESSION
 
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 class AsMessageASTTransformation implements ASTTransformation {
+    private static final String NAMED_PARAMS = '$_args'
+
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
         if (nodes.length != 2 || !(nodes[0] instanceof AnnotationNode) || !(nodes[1] instanceof AnnotatedNode)) {
@@ -40,7 +42,7 @@ class AsMessageASTTransformation implements ASTTransformation {
 
     private messageMethodParametersFrom(params) {
         [
-            new Parameter(new ClassNode(Map), 'args'),
+            new Parameter(new ClassNode(Map), NAMED_PARAMS),
             new Parameter(params[0].type, params[0].name, params[0].initialExpression),
         ] as Parameter[]
     }
@@ -54,7 +56,7 @@ class AsMessageASTTransformation implements ASTTransformation {
     }
 
     private argsToCallOriginalMethod(params) {
-        def argsParam = new VariableExpression('args')
+        def argsParam = new VariableExpression(NAMED_PARAMS)
 
         def args = [new VariableExpression(params[0].name)] + allButFirst(params).collect {
             if (it.hasInitialExpression()) {
