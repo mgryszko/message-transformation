@@ -53,7 +53,26 @@ class MethodAsMessageSpec extends Specification {
             container.namedParameters([namedParam1: 1..3, namedParam2: 'np2'], param1: '1', param2: 2)
     }
 
-    // TODO transformation on a method with varargs
+    def 'varargs of the original method can be provided either as array or list after transformation'() {
+        expect:
+        container.untypedVarargs('1', 2, 3, 4) == container.untypedVarargs('1', varargs: [2, 3, 4] as Object[])
+        container.untypedVarargs('1', 2, 3, 4) == container.untypedVarargs('1', varargs: [2, 3, 4])
+        container.typedVarargs('1', 2, 3, 4) == container.typedVarargs('1', varargs: [2, 3, 4] as int[])
+        container.typedVarargs('1', 2, 3, 4) == container.typedVarargs('1', varargs: [2, 3, 4])
+    }
+
+    def 'any array parameter of the original method can be provided either as array or list after transformation'() {
+        expect:
+        container.arrayParameter('1', [2, 3, 4] as int[], '3') ==
+            container.arrayParameter('1', param2: [2, 3, 4] as int[], param3: '3')
+        container.arrayParameter('1', [2, 3, 4] as int[], '3') ==
+            container.arrayParameter('1', param2: [2, 3, 4], param3: '3')
+        container.arrayParameterWithDefaultValue('1', [2, 3, 4] as int[], '3') ==
+            container.arrayParameterWithDefaultValue('1', param2: [2, 3, 4] as int[], param3: '3')
+        container.arrayParameterWithDefaultValue('1', [2, 3, 4] as int[], '3') ==
+            container.arrayParameterWithDefaultValue('1', param2: [2, 3, 4], param3: '3')
+    }
+
     // TODO transformation on a method with closure as last parameter
     // TODO control if all parameters are passed
     // TODO choose if first parameter should be preserved

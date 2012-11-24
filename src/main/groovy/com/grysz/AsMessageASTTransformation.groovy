@@ -58,15 +58,15 @@ class AsMessageASTTransformation implements ASTTransformation {
     private argsToCallOriginalMethod(params) {
         def argsParam = new VariableExpression(NAMED_PARAMS)
 
-        def args = [new VariableExpression(params[0].name)] + allButFirst(params).collect {
-            if (it.hasInitialExpression()) {
+        def args = [new VariableExpression(params[0].name)] + allButFirst(params).collect { param ->
+            if (param.hasInitialExpression()) {
                 new TernaryExpression(
-                    new BooleanExpression(containsKey(argsParam, it.name)), // if
-                    valueFromMap(argsParam, it.name), // then
-                    it.initialExpression // else
+                    new BooleanExpression(containsKey(argsParam, param.name)), // if
+                    getAndCastToArray(argsParam, param), // then
+                    param.initialExpression // else
                 )
             } else {
-                valueFromMap(argsParam, it.name)
+                getAndCastToArray(argsParam, param)
             }
         }
 
@@ -77,7 +77,12 @@ class AsMessageASTTransformation implements ASTTransformation {
         c[1..c.size() - 1]
     }
 
-    private valueFromMap(map, key) {
+    private getAndCastToArray(argsParam, param) {
+        def expr = get(argsParam, param.name)
+        param.type.typeClass.array ? CastExpression.asExpression(param.type, expr) : expr
+    }
+
+    private get(map, key) {
         new PropertyExpression(map, key)
     }
 

@@ -35,4 +35,24 @@ class MethodContainer {
     def namedParameters(Map args, String param1, Number param2) {
         "namedParameters($args, $param1, $param2)"
     }
+
+    @AsMessage
+    def untypedVarargs(String param1, ...varargs) {
+        "untypedVarargs($param1, $varargs)"
+    }
+
+    @AsMessage
+    def typedVarargs(String param1, int[] varargs) {
+        "typedVarargs($param1, $varargs)"
+    }
+
+    @AsMessage
+    def arrayParameter(String param1, int[] param2, String param3) {
+        "arrayParameter($param1, $param2, $param3)"
+    }
+
+    @AsMessage
+    def arrayParameterWithDefaultValue(String param1, int[] param2 = [2, 3, 4] as int[], String param3) {
+        "arrayParameterWithDefaultValue($param1, $param2, $param3)"
+    }
 }
