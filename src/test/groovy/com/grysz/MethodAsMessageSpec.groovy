@@ -47,7 +47,7 @@ class MethodAsMessageSpec extends Specification {
             container.firstParameterHasDefaultValue(param2: 22, param3: 31..33)
     }
 
-    def 'named parameters'() {
+    def 'named parameters of the original method must be provided as an explicit map in the first parameter after transformation'() {
         expect:
         container.namedParameters('1', 2, namedParam1: 1..3, namedParam2: 'np2') ==
             container.namedParameters([namedParam1: 1..3, namedParam2: 'np2'], param1: '1', param2: 2)
