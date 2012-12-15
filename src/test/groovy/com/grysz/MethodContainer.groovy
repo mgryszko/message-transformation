@@ -65,4 +65,9 @@ class MethodContainer {
     def lastClosureParameter(String param1, Closure param2) {
         "lastClosureParameter($param1, ${param2()})"
     }
+
+    @AsMessage
+    def lastClosureParameterWithDefaultValue(String param1, param2, Closure param3 = { '3' }) {
+        "lastClosureParameterWithDefaultValue($param1, $param2, ${param3()})"
+    }
 }

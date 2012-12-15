@@ -69,10 +69,12 @@ class AsMessageASTTransformationSpec extends Specification {
             container.arrayParameterWithDefaultValue('1', param2: [2, 3, 4], param3: '3')
     }
 
-    def "preserves last closure parameter"() {
+    def "preserves last closure parameter, with or without a default value"() {
         expect:
         container.lastClosureParameter('1', 2) { '3' } == container.lastClosureParameter('1', param2: 2) { '3' }
         container.lastClosureParameter '1', { '2' }
+        container.lastClosureParameterWithDefaultValue('1', 2) ==
+            container.lastClosureParameterWithDefaultValue('1', param2: 2)
     }
 
     // TODO email to Groovy list - why array parameter is passed as List to methodMissing
