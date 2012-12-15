@@ -2,7 +2,7 @@ package com.grysz
 
 import spock.lang.Specification
 
-class MethodAsMessageSpec extends Specification {
+class AsMessageASTTransformationSpec extends Specification {
     private container = new MethodContainer()
 
     def 'parameterless method is not transformed'() {
@@ -19,15 +19,11 @@ class MethodAsMessageSpec extends Specification {
 
     def 'adds a method with named arguments calling the original method with two parameters'() {
         expect:
-        container.metaClass.respondsTo(container, 'twoParameters', String, Number)
-        container.metaClass.respondsTo(container, 'twoParameters', Map, String)
         container.twoParameters('1', 2) == container.twoParameters('1', param2: 2)
     }
 
     def 'adds a method with named arguments calling the original method with three parameters'() {
         expect:
-        container.metaClass.respondsTo(container, 'threeParameters', String, Number, List)
-        container.metaClass.respondsTo(container, 'threeParameters', Map, String)
         container.threeParameters('p1', 2, ['p3']) == container.threeParameters('p1', param2: 2, param3: ['p3'])
     }
 
@@ -73,7 +69,13 @@ class MethodAsMessageSpec extends Specification {
             container.arrayParameterWithDefaultValue('1', param2: [2, 3, 4], param3: '3')
     }
 
-    // TODO transformation on a method with closure as last parameter
+    def "preserves last closure parameter"() {
+        expect:
+        container.lastClosureParameter('1', 2) { '3' } == container.lastClosureParameter('1', param2: 2) { '3' }
+        container.lastClosureParameter '1', { '2' }
+    }
+
+    // TODO email to Groovy list - why array parameter is passed as List to methodMissing
     // TODO control if all parameters are passed
     // TODO choose if first parameter should be preserved
 }

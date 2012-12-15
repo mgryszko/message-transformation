@@ -55,4 +55,14 @@ class MethodContainer {
     def arrayParameterWithDefaultValue(String param1, int[] param2 = [2, 3, 4] as int[], String param3) {
         "arrayParameterWithDefaultValue($param1, $param2, $param3)"
     }
+
+    @AsMessage
+    def lastClosureParameter(String param1, param2, Closure param3) {
+        "lastClosureParameter($param1, $param2, ${param3()})"
+    }
+
+    @AsMessage
+    def lastClosureParameter(String param1, Closure param2) {
+        "lastClosureParameter($param1, ${param2()})"
+    }
 }

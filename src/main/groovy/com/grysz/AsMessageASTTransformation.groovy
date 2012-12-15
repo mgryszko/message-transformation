@@ -23,7 +23,7 @@ class AsMessageASTTransformation implements ASTTransformation {
             addError("Internal error: expecting [AnnotationNode, AnnotatedNode] but got: ${nodes.toList()}", nodes[0], source);
         }
         MethodNode method = nodes[1]
-        if (method.parameters.size() > 1) {
+        if (shouldTransform(method)) {
             method.declaringClass.addMethod new MethodNode(
                 method.name,
                 method.modifiers,
@@ -40,41 +40,75 @@ class AsMessageASTTransformation implements ASTTransformation {
         source.getErrorCollector().addError new SyntaxErrorMessage(syntaxEx, source)
     }
 
-    private messageMethodParametersFrom(params) {
-        [
-            new Parameter(new ClassNode(Map), NAMED_PARAMS),
-            new Parameter(params[0].type, params[0].name, params[0].initialExpression),
-        ] as Parameter[]
+    private shouldTransform(MethodNode method) {
+        method.parameters.size() > 1 && !(method.parameters.size() == 2 && lastParameterIsClosure(method.parameters))
     }
 
-    private messageMethodBodyCalling(method) {
+    private messageMethodParametersFrom(originalParams) {
+        def messageParams = [
+            new Parameter(new ClassNode(Map), NAMED_PARAMS),
+            new Parameter(originalParams[0].type, originalParams[0].name, originalParams[0].initialExpression),
+        ]
+        if (lastParameterIsClosure(originalParams)) {
+            messageParams << new Parameter(originalParams.last().type, originalParams.last().name, originalParams.last().initialExpression)
+        }
+        messageParams as Parameter[]
+    }
+
+    private messageMethodBodyCalling(originalMethod) {
         new BlockStatement([
             new ExpressionStatement(
-                new MethodCallExpression(THIS_EXPRESSION, method.name, argsToCallOriginalMethod(method.parameters))
+                new MethodCallExpression(THIS_EXPRESSION, originalMethod.name, argsToCallOriginalMethod(originalMethod.parameters))
             )], new VariableScope()
         )
     }
 
-    private argsToCallOriginalMethod(params) {
-        def argsParam = new VariableExpression(NAMED_PARAMS)
-
-        def args = [new VariableExpression(params[0].name)] + allButFirst(params).collect { param ->
-            if (param.hasInitialExpression()) {
-                new TernaryExpression(
-                    new BooleanExpression(containsKey(argsParam, param.name)), // if
-                    getAndCastToArray(argsParam, param), // then
-                    param.initialExpression // else
-                )
-            } else {
-                getAndCastToArray(argsParam, param)
-            }
+    private argsToCallOriginalMethod(originalParams) {
+        def args = [firstArg(originalParams)] + argsToBeTakenFromNamedParameters(originalParams)
+        if (lastParameterIsClosure(originalParams)) {
+            args << lastArg(originalParams)
         }
 
         new ArgumentListExpression(args)
     }
 
+    private firstArg(originalParams) {
+        new VariableExpression(originalParams.first().name)
+    }
+
+    private argsToBeTakenFromNamedParameters(originalParams) {
+        def argsParam = new VariableExpression(NAMED_PARAMS)
+
+        def originalParamsToTakeFromNamedParams = lastParameterIsClosure(originalParams) ?
+            allButFirstAndLast(originalParams) :
+            allButFirst(originalParams)
+        originalParamsToTakeFromNamedParams.collect { originalParam ->
+            if (originalParam.hasInitialExpression()) {
+                new TernaryExpression(
+                    new BooleanExpression(containsKey(argsParam, originalParam.name)), // if
+                    getAndCastToArray(argsParam, originalParam), // then
+                    originalParam.initialExpression // else
+                )
+            } else {
+                getAndCastToArray(argsParam, originalParam)
+            }
+        }
+    }
+
+    private lastArg(originalParams) {
+        new VariableExpression(originalParams.last().name)
+    }
+
+    private lastParameterIsClosure(params) {
+        params.last().type == new ClassNode(Closure)
+    }
+
     private allButFirst(c) {
         c[1..c.size() - 1]
+    }
+
+    private allButFirstAndLast(c) {
+        c[1..c.size() - 2]
     }
 
     private getAndCastToArray(argsParam, param) {
