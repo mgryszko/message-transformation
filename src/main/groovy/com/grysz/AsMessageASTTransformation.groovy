@@ -22,15 +22,16 @@ class AsMessageASTTransformation implements ASTTransformation {
         if (nodes.length != 2 || !(nodes[0] instanceof AnnotationNode) || !(nodes[1] instanceof AnnotatedNode)) {
             addError("Internal error: expecting [AnnotationNode, AnnotatedNode] but got: ${nodes.toList()}", nodes[0], source);
         }
+        def preserveFirstParam = preserveFirstParam(nodes[0])
         MethodNode method = nodes[1]
         if (shouldTransform(method)) {
             method.declaringClass.addMethod new MethodNode(
                 method.name,
                 method.modifiers,
                 method.returnType,
-                messageMethodParametersFrom(method.parameters),
+                messageMethodParametersFrom(method.parameters, preserveFirstParam),
                 method.exceptions,
-                messageMethodBodyCalling(method),
+                messageMethodBodyCalling(method, preserveFirstParam),
             )
         }
     }
@@ -40,31 +41,44 @@ class AsMessageASTTransformation implements ASTTransformation {
         source.getErrorCollector().addError new SyntaxErrorMessage(syntaxEx, source)
     }
 
-    private shouldTransform(MethodNode method) {
+    private preserveFirstParam(asMessageAnnotation) {
+        def preserve = asMessageAnnotation.getMember('preserveFirstParameter')
+        preserve ? preserve.value : true
+    }
+    private shouldTransform(method) {
         method.parameters.size() > 1 && !(method.parameters.size() == 2 && lastParameterIsClosure(method.parameters))
     }
 
-    private messageMethodParametersFrom(originalParams) {
-        def messageParams = [
-            new Parameter(new ClassNode(Map), NAMED_PARAMS),
-            new Parameter(originalParams[0].type, originalParams[0].name, originalParams[0].initialExpression),
-        ]
+    private messageMethodParametersFrom(originalParams, preserveFirstParam) {
+        def messageParams = [new Parameter(new ClassNode(Map), NAMED_PARAMS)]
+        if (preserveFirstParam) {
+            messageParams <<
+                new Parameter(originalParams.first().type, originalParams.first().name, originalParams.first().initialExpression)
+        }
         if (lastParameterIsClosure(originalParams)) {
             messageParams << new Parameter(originalParams.last().type, originalParams.last().name, originalParams.last().initialExpression)
         }
         messageParams as Parameter[]
     }
 
-    private messageMethodBodyCalling(originalMethod) {
+    private messageMethodBodyCalling(originalMethod, preserveFirstParam) {
         new BlockStatement([
             new ExpressionStatement(
-                new MethodCallExpression(THIS_EXPRESSION, originalMethod.name, argsToCallOriginalMethod(originalMethod.parameters))
+                new MethodCallExpression(
+                    THIS_EXPRESSION,
+                    originalMethod.name,
+                    argsToCallOriginalMethod(originalMethod.parameters, preserveFirstParam)
+                )
             )], new VariableScope()
         )
     }
 
-    private argsToCallOriginalMethod(originalParams) {
-        def args = [firstArg(originalParams)] + argsToBeTakenFromNamedParameters(originalParams)
+    private argsToCallOriginalMethod(originalParams, preserveFirstParam) {
+        def args = []
+        if (preserveFirstParam) {
+            args << firstArg(originalParams)
+        }
+        args += argsToBeTakenFromNamedParameters(originalParams, preserveFirstParam)
         if (lastParameterIsClosure(originalParams)) {
             args << lastArg(originalParams)
         }
@@ -76,12 +90,10 @@ class AsMessageASTTransformation implements ASTTransformation {
         new VariableExpression(originalParams.first().name)
     }
 
-    private argsToBeTakenFromNamedParameters(originalParams) {
+    private argsToBeTakenFromNamedParameters(originalParams, preserveFirstParam) {
         def argsParam = new VariableExpression(NAMED_PARAMS)
 
-        def originalParamsToTakeFromNamedParams = lastParameterIsClosure(originalParams) ?
-            allButFirstAndLast(originalParams) :
-            allButFirst(originalParams)
+        def originalParamsToTakeFromNamedParams = toTake(originalParams, preserveFirstParam)
         originalParamsToTakeFromNamedParams.collect { originalParam ->
             if (originalParam.hasInitialExpression()) {
                 new TernaryExpression(
@@ -95,20 +107,19 @@ class AsMessageASTTransformation implements ASTTransformation {
         }
     }
 
+    private toTake(originalParams, preserveFirstParam)
+    {
+        def start = preserveFirstParam ? 1 : 0
+        def end = lastParameterIsClosure(originalParams) ? originalParams.size() - 2 : originalParams.size() - 1
+        originalParams[start..end]
+    }
+
     private lastArg(originalParams) {
         new VariableExpression(originalParams.last().name)
     }
 
     private lastParameterIsClosure(params) {
         params.last().type == new ClassNode(Closure)
-    }
-
-    private allButFirst(c) {
-        c[1..c.size() - 1]
-    }
-
-    private allButFirstAndLast(c) {
-        c[1..c.size() - 2]
     }
 
     private getAndCastToArray(argsParam, param) {

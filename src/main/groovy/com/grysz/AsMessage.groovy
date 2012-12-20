@@ -11,4 +11,5 @@ import java.lang.annotation.Target
 @Target(ElementType.METHOD)
 @GroovyASTTransformationClass(['com.grysz.AsMessageASTTransformation'])
 @interface AsMessage {
+    boolean preserveFirstParameter() default true
 }

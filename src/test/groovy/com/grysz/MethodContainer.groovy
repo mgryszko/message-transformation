@@ -70,4 +70,9 @@ class MethodContainer {
     def lastClosureParameterWithDefaultValue(String param1, param2, Closure param3 = { '3' }) {
         "lastClosureParameterWithDefaultValue($param1, $param2, ${param3()})"
     }
+
+    @AsMessage(preserveFirstParameter = false)
+    def firstParameterNotPreserved(String param1, Number param2, List param3) {
+        "firstParameterNotPreserved($param1, $param2, $param3)"
+    }
 }

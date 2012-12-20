@@ -77,7 +77,11 @@ class AsMessageASTTransformationSpec extends Specification {
             container.lastClosureParameterWithDefaultValue('1', param2: 2)
     }
 
-    // TODO email to Groovy list - why array parameter is passed as List to methodMissing
+    def "you can decide if first parameter should be preserved"() {
+        expect:
+        container.firstParameterNotPreserved('1', 2, 31..33) ==
+            container.firstParameterNotPreserved(param1: '1', param2: 2, param3: 31..33)
+    }
+
     // TODO control if all parameters are passed
-    // TODO choose if first parameter should be preserved
 }
